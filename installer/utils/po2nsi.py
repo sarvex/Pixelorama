@@ -99,25 +99,24 @@ for root,dirs,files in os.walk(options.podir):
         if ext == ".po":
             # Valid locale filename (fr.po, de.po etc)?
             if filename not in localeToName:
-                print("%s: invalid filename, must be xx-YY language code" %(filename))
+                print(f"{filename}: invalid filename, must be xx-YY language code")
             else:
                 if options.verbose:
-                    print("Valid filename found")             
+                    print("Valid filename found")
                 language = localeToName[filename]
-                translationCache[language] = collections.OrderedDict()         
+                translationCache[language] = collections.OrderedDict()
                 # Let's add a default LANGUAGE_CODE LangString to be read
                 translationCache[language]["LANGUAGE_CODE"] = filename
                 if options.verbose:
-                    print("Language: %s (%s)" %(language, translationCache[language]["LANGUAGE_CODE"]))
+                    print(f'Language: {language} ({translationCache[language]["LANGUAGE_CODE"]})')
 
                 # Are we RTL? Mark that down too as a LangString
                 if filename in localeRTL:
                     translationCache[language]["LANGUAGE_RTL"] = "1"
                     if options.verbose:
                         print("RTL language")
-                else:
-                    if options.verbose:
-                        print("Non RTL language")
+                elif options.verbose:
+                    print("Non RTL language")
 
                 po = polib.pofile(os.path.join(root,file))
                 for entry in po.translated_entries():
@@ -125,27 +124,25 @@ for root,dirs,files in os.walk(options.podir):
                     for label in entry.comment.split():
                         translationCache[language][label] = escapeNSIS(entry.msgstr)
                         if options.verbose:
-                            print("msgstr added, " + translationCache[language][label])
+                            print(f"msgstr added, {translationCache[language][label]}")
                 # For untranslated strings, let's add the English entry
                 for entry in po.untranslated_entries():
                     for label in entry.comment.split():
-                        print("Warning: Label '%s' for language %s remains untranslated"%(label,language))
+                        print(f"Warning: Label '{label}' for language {language} remains untranslated")
                         translationCache[language][label] = escapeNSIS(entry.msgid)
                 if options.verbose:
                     print('\n')
 
 
-        
 
 
-# Open our source NSI, dump it to a list and close it
-NSISourceFile = open(options.input,"r")
-if options.verbose:
-    print("Opened source file")
-NSISourceLines = NSISourceFile.readlines()
-if options.verbose:
-    print("Read source file lines")
-NSISourceFile.close()
+
+with open(options.input,"r") as NSISourceFile:
+    if options.verbose:
+        print("Opened source file")
+    NSISourceLines = NSISourceFile.readlines()
+    if options.verbose:
+        print("Read source file lines")
 if options.verbose:    
     print("Closed source file")
 NSINewLines = []
@@ -173,10 +170,7 @@ for line in NSISourceLines:
             print ("%i translations merged for language %s" %(count,language))
     else:
         NSINewLines.append (line)
-    
-# Finally, let's write our new .nsi to the desired target file
-NSIWorkingFile = open(options.output,"w",encoding='utf-8')
-NSIWorkingFile.writelines(NSINewLines)
-NSIWorkingFile.close()
-    
-print ("%s: NSIS script successfully localized" %options.output)
+
+with open(options.output,"w",encoding='utf-8') as NSIWorkingFile:
+    NSIWorkingFile.writelines(NSINewLines)
+print(f"{options.output}: NSIS script successfully localized")
